@@ -178,8 +178,6 @@ function openPlayer(id) {
     document.getElementById('playerTitle').textContent = content.title;
     document.getElementById('player').classList.remove('hidden');
     document.getElementById('playBtn').textContent = '재생';
-    document.getElementById('subtitleBtn').textContent = '자막 OFF';
-
     // VOD 재생 화면: 콘텐츠별 AI 생성 포스터 이미지를 배경으로 사용해 실제 영상처럼 연출
     if (screen) {
         screen.style.backgroundImage = `url('${content.poster}')`;
@@ -206,11 +204,6 @@ function togglePlay() {
     const willPlay = btn.textContent === '재생'; // 현재 '재생' 표시 = 지금은 일시정지 상태
     btn.textContent = willPlay ? '일시정지' : '재생';
     if (screen) screen.classList.toggle('paused', !willPlay);
-}
-
-function toggleSubtitle() {
-    const btn = document.getElementById('subtitleBtn');
-    btn.textContent = btn.textContent === '자막 OFF' ? '자막 ON' : '자막 OFF';
 }
 
 function changeSpeed() {
