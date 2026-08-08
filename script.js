@@ -190,7 +190,6 @@ function openPlayer(id) {
         video.currentTime = 0;
         video.style.display = 'none';
     }
-
     const saved = getProgress(id);
     if (saved > 0 && saved < 100) {
         progress = saved;
@@ -238,6 +237,9 @@ function exitPlayer() {
         video.currentTime = 0;
         video.style.display = 'none';
     }
+
+    document.getElementById('player').classList.add('hidden');
+}
 
     document.getElementById('player').classList.add('hidden');
 }
