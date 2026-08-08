@@ -1,0 +1,390 @@
+<!Doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MockOTT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     THEME — "Ledger / Verified" (MockOTT-Auth 프로젝트와 톤 통일)
+     ============================================================ */
+  :root{
+    --bg: #1a1033;
+    --bg-elev: #241640;
+    --bg-card: #2e1a52;
+    --line: #6a3fb5;
+    --gold: #ff5fa2;
+    --gold-dim: #c23f80;
+    --text: #fef6ff;
+    --text-dim: #c9a8f0;
+    --danger: #ff5f5f;
+    --ok: #4ee6a8;
+    --c1: #ff5fa2; --c2: #ffb347; --c3: #4ee6a8; --c4: #4fc3f7; --c5: #b98cff;
+    --radius: 6px;
+    --serif: "Noto Serif KR", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0;
+    background:
+      radial-gradient(circle at 15% 0%, rgba(255,95,162,.18), transparent 45%),
+      radial-gradient(circle at 85% 15%, rgba(79,195,247,.16), transparent 45%),
+      radial-gradient(circle at 50% 90%, rgba(78,230,168,.14), transparent 50%),
+      var(--bg);
+    color: var(--text);
+    font-family: var(--serif);
+    line-height: 1.6;
+  }
+  h1,h2{ font-family: var(--serif); font-weight:700; margin:0; letter-spacing:.01em; }
+
+  /* ===== 상단 고정 바 (브랜드 + 계정 + 검색) ===== */
+  .topnav{
+    position: sticky; top:0; z-index:20;
+    background: var(--bg-elev);
+    border-bottom: 1px solid var(--line);
+    padding: 14px 20px;
+  }
+  .topnav-row{
+    max-width: 760px; margin:0 auto;
+    display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+  }
+  .brand{
+    font-size: 1.25rem; font-weight:700;
+    background: linear-gradient(90deg, var(--c1), var(--c2), var(--c3), var(--c4), var(--c5));
+    -webkit-background-clip: text; background-clip:text; color: transparent;
+    letter-spacing:.04em; position:relative; padding-left:30px; flex: 0 0 auto;
+  }
+  .brand::before{
+    content:"✓"; position:absolute; left:0; top:50%; transform:translateY(-50%);
+    width:22px; height:22px; border-radius:50%;
+    border:1.5px solid var(--gold);
+    display:flex; align-items:center; justify-content:center;
+    font-size:.7rem; color:var(--gold); font-family: var(--sans);
+  }
+
+  #auth{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-left:auto; }
+  #auth input{ width: 130px; }
+  #userInfo{
+    font-family: var(--sans); font-size:.82rem; color: var(--text-dim);
+    border:1px solid var(--line); padding:6px 12px; border-radius:20px;
+    margin:0; min-height:0;
+  }
+  #userInfo:empty{ display:none; }
+
+  #searchnbox{ display:flex; gap:8px; }
+  #searchnbox input{ width: 160px; }
+
+  main{ max-width:760px; margin:0 auto; padding: 28px 20px 60px; }
+  .eyebrow{
+    color: var(--gold-dim); font-size:.74rem; letter-spacing:.2em; text-transform:uppercase;
+    margin: 0 0 10px; font-family: var(--sans);
+  }
+
+  input, select{
+    background: var(--bg-card);
+    border:1px solid var(--line);
+    color: var(--text);
+    padding: 9px 12px;
+    border-radius: var(--radius);
+    font-size: .88rem;
+    font-family: var(--serif);
+  }
+  input::placeholder{ color: var(--text-dim); }
+
+  button{
+    background: linear-gradient(120deg, var(--c1), var(--c2));
+    color:#2a0d1f;
+    border:none;
+    padding: 9px 16px;
+    border-radius: var(--radius);
+    font-weight:700;
+    cursor:pointer;
+    font-size:.85rem;
+    letter-spacing:.02em;
+    transition: filter .15s, transform .12s;
+    font-family: var(--serif);
+  }
+  button:hover{ filter:brightness(1.12); transform: translateY(-1px); }
+  button:active{ transform: translateY(0); }
+  button:focus-visible{ outline:2px solid var(--c4); outline-offset:1px; }
+  button:disabled{
+    background: var(--line); color: var(--text-dim);
+    cursor:not-allowed; filter:none; transform:none;
+  }
+
+  #auth button[onclick="logout()"]{
+    background:transparent; color: var(--text); border:1px solid var(--line);
+  }
+  .ghost-btn{
+    background:transparent !important; color: var(--text-dim) !important;
+    border:1px solid var(--line) !important; font-weight:500 !important;
+    font-size:.78rem !important; padding:7px 12px !important;
+  }
+  .ghost-btn:hover{ color: var(--danger) !important; border-color: var(--danger) !important; }
+
+  /* ===== 콘텐츠 리스트 (카드형 — dockauth.html 실제 렌더링 반영) ===== */
+  #contentList{
+    list-style:none; margin:0; padding:0;
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(148px, 1fr));
+    gap:16px;
+  }
+  #contentList li{
+    background: var(--bg-card);
+    border:1px solid var(--line);
+    border-radius: 10px;
+    cursor:pointer;
+    overflow:hidden;
+    transition: transform .15s, border-color .15s;
+  }
+  #contentList li:hover{ transform: translateY(-2px); border-color: var(--gold-dim); }
+
+  .thumb{
+    height:96px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.7rem;
+    position:relative;
+    background-size: cover;
+    background-position: center;
+  }
+  .lock-badge{
+    position:absolute; top:6px; right:8px;
+    font-size:.85rem;
+  }
+  .card-body{ padding:12px; }
+  .card-title{
+    font-size:.9rem; font-weight:600; margin-bottom:6px;
+    word-break: keep-all;
+  }
+  .card-meta{ font-family: var(--sans); font-size:.76rem; }
+  .tag-free{ color: var(--ok); font-weight:600; }
+  .tag-paid{ color: var(--c2); font-weight:600; }
+  .tag-owned{ color: var(--c4); font-weight:600; }
+
+  #contentList li:nth-child(6n+1) .thumb{ background: linear-gradient(135deg, var(--c1), #c23f80); }
+  #contentList li:nth-child(6n+2) .thumb{ background: linear-gradient(135deg, var(--c2), #d98a1f); }
+  #contentList li:nth-child(6n+3) .thumb{ background: linear-gradient(135deg, var(--c3), #2ba97a); }
+  #contentList li:nth-child(6n+4) .thumb{ background: linear-gradient(135deg, var(--c4), #2a8fc4); }
+  #contentList li:nth-child(6n+5) .thumb{ background: linear-gradient(135deg, var(--c5), #8352d1); }
+  #contentList li:nth-child(6n+6) .thumb{ background: linear-gradient(135deg, var(--gold), #d1704a); }
+
+  /* 검색 결과 없음 안내(단독 텍스트 li)는 카드 스타일을 적용하지 않는다 */
+  #contentList li.no-result{
+    padding: 16px; text-align:center; color: var(--text-dim); font-family: var(--sans); cursor:default;
+  }
+
+  /* 로그인 전 / 검색 결과 없음: ul이 비어있을 때만 안내 일러스트 노출 (CSS만으로 처리, JS 변경 없음) */
+  .empty-state{
+    display:none; flex-direction:column; align-items:center; justify-content:center;
+    padding: 30px 10px 6px; text-align:center;
+  }
+  #contentList:empty ~ .empty-state{ display:flex; }
+  .empty-state svg{ width:100%; max-width:320px; height:auto; }
+  .empty-state p{ margin-top:12px; color:var(--text-dim); font-size:.85rem; font-family: var(--sans); }
+
+  /* ===== 결제 모달 ===== */
+  #payment{
+    position: fixed; inset:0;
+    background: rgba(4,7,14,.78);
+    display:flex; align-items:center; justify-content:center;
+    padding:20px; z-index:40;
+  }
+  #payment.hidden{ display:none; }
+  .modal-card{
+    background: var(--bg-elev);
+    border:1px solid var(--gold-dim);
+    border-radius: 10px;
+    width:100%; max-width:420px;
+    padding:26px;
+    box-shadow: 0 0 0 1px rgba(95,217,189,.08), 0 20px 60px rgba(0,0,0,.5);
+  }
+  .payment-thumb{
+    height:120px; border-radius:8px; margin-bottom:16px;
+    background-size:cover; background-position:center;
+    border:1px solid var(--line);
+  }
+  #paymentInfo{
+    font-family: var(--serif); font-size:1.05rem; font-weight:600; color: var(--text);
+    margin: 0 0 14px;
+  }
+  .payment-row{
+    display:flex; align-items:center; justify-content:space-between;
+    font-family: var(--sans); font-size:.85rem; color: var(--text-dim);
+    padding: 8px 0; border-bottom: 1px solid var(--line);
+  }
+  .payment-row:last-of-type{ border-bottom:none; margin-bottom: 18px; }
+  .payment-row .price-tag{ font-size:1.05rem; font-weight:700; color: var(--gold); font-family: var(--serif); }
+  .modal-actions{ display:flex; gap:10px; }
+  .modal-actions button{ flex:1; }
+  #payment button[onclick="closePayment()"]{
+    background:transparent; color: var(--text-dim); border:1px solid var(--line);
+  }
+
+  /* ===== 플레이어 ===== */
+  #player{
+    background: var(--bg-elev);
+    border:1px solid var(--line);
+    border-radius: 10px;
+    padding: 24px;
+  }
+  #player.hidden{ display:none; }
+  #playerTitle{ font-size:1.2rem; margin-bottom:6px; display:inline-block; }
+  .resume-badge{
+    font-family: var(--sans); font-size:.72rem; color: var(--gold);
+    border:1px solid var(--gold-dim); padding:2px 9px; border-radius:20px;
+    margin-left:8px; vertical-align:middle;
+  }
+  .resume-badge.hidden{ display:none; }
+  #resumeMessage{
+    font-family: var(--sans); font-size:.78rem; color: var(--gold);
+    min-height:16px; margin:0 0 14px;
+  }
+  .player-screen{
+    background: linear-gradient(120deg, var(--c1), var(--c2), var(--c3), var(--c4), var(--c5));
+    background-size:180% 180%;
+    background-position: 30% 30%;
+    animation: player-pan 9s ease-in-out infinite;
+    border-radius:8px; height:150px;
+    margin-bottom:14px;
+    position:relative;
+    overflow:hidden;
+  }
+  .player-screen::after{
+    content:"";
+    position:absolute; inset:0;
+    background: linear-gradient(120deg, rgba(255,95,162,.28), rgba(255,179,71,.22), rgba(78,230,168,.22), rgba(79,195,247,.24), rgba(185,140,255,.24));
+    background-size:200% 200%;
+    animation: player-glow 4s ease-in-out infinite;
+    mix-blend-mode: overlay;
+  }
+  .player-screen::before{
+    content:"AI 생성 이미지 기반 재생 화면";
+    position:absolute; left:8px; bottom:8px;
+    font-family: var(--sans); font-size:.62rem; letter-spacing:.04em;
+    color: rgba(255,255,255,.85);
+    background: rgba(4,7,14,.45);
+    padding: 3px 8px; border-radius: 20px;
+    z-index: 2;
+  }
+  .player-screen.paused{ animation-play-state: paused; }
+  .player-screen.paused::after{ animation-play-state: paused; }
+  @keyframes player-pan{ 0%,100%{background-position:20% 25%;} 50%{background-position:75% 65%;} }
+  @keyframes player-glow{ 0%,100%{background-position:0% 50%;} 50%{background-position:100% 50%;} }
+  @media (prefers-reduced-motion: reduce){ .player-screen, .player-screen::after{ animation:none; } }
+
+  .progress-wrap{
+    background: var(--bg-card); border-radius:6px; height:6px; overflow:hidden; margin-bottom:6px;
+  }
+  #playerProgressBar{
+    height:100%; width:0%;
+    background: linear-gradient(90deg, var(--c1), var(--c2), var(--c3), var(--c4));
+    transition: width .3s;
+  }
+
+  .player-controls{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin: 14px 0; }
+  #speedSelect{ width:auto; }
+  .progress-row{
+    font-family: var(--sans); font-size:.82rem; color: var(--text-dim);
+    margin-bottom:16px;
+  }
+  #progressText{ color: var(--c4); font-weight:600; }
+
+  #player button[onclick="exitPlayer()"]{
+    width:100%; background:transparent; color: var(--text-dim); border:1px solid var(--line);
+  }
+  #player button[onclick="exitPlayer()"]:hover{ color: var(--danger); border-color: var(--danger); }
+
+  @media (max-width: 600px){
+    .topnav-row{ flex-direction:column; align-items:stretch; }
+    #auth{ margin-left:0; }
+    #auth input{ width:auto; flex:1; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topnav">
+  <div class="topnav-row">
+    <div class="brand">Mock<span>OTT</span></div>
+
+    <div id ="searchnbox">
+     <input id ="keyword" placeholder="검색어 입력">
+     <button onclick = "search()">검색</button>
+    </div>
+
+    <div id="auth">
+      <input id = "username" placeholder="아이디">
+      <input id = "password" type="password" placeholder="비밀번호">
+      <button onclick="login()" id="loginBtn">로그인</button>
+      <button onclick="logout()" id="logoutBtn" disabled>로그아웃</button>
+      <button onclick="resetPurchases()" id="resetBtn" class="ghost-btn">구매 초기화</button>
+      <p id = "userInfo"></p>
+    </div>
+  </div>
+</header>
+
+<main>
+  <p class="eyebrow">MOCKOTT LIBRARY</p>
+
+  <ul id="contentList"></ul>
+
+  <div class="empty-state">
+    <svg viewBox="0 0 480 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="로그인 안내 일러스트">
+      <defs>
+        <radialGradient id="glowGrad" cx="50%" cy="35%" r="65%">
+          <stop offset="0%" stop-color="#ff5fa2" stop-opacity="0.16"/>
+          <stop offset="100%" stop-color="#ff5fa2" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <circle cx="240" cy="120" r="120" fill="url(#glowGrad)"/>
+      <rect x="150" y="92" width="180" height="112" rx="10" fill="#2e1a52" stroke="#6a3fb5" stroke-width="1.5"/>
+      <rect x="164" y="106" width="152" height="72" rx="4" fill="#1a1033"/>
+      <text x="240" y="150" text-anchor="middle" font-family="Noto Serif KR, serif" font-size="15" fill="#ff5fa2" font-weight="700">MockOTT</text>
+      <circle cx="240" cy="230" r="8" fill="none" stroke="#ff5fa2" stroke-width="1.6"/>
+      <path d="M236 230 l3 3 l6 -7" stroke="#ff5fa2" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <p>로그인하면 콘텐츠 목록을 확인할 수 있어요.</p>
+  </div>
+
+  <div id ="payment" class="hidden">
+    <div class="modal-card">
+      <p class="eyebrow">결제 확인</p>
+      <div id="paymentThumb" class="payment-thumb" aria-hidden="true"></div>
+      <p id = "paymentInfo"></p>
+      <div class="payment-row"><span>결제 금액</span><span id="paymentPrice" class="price-tag"></span></div>
+      <div class="payment-row"><span>보유 잔액</span><span id="paymentBalance" class="price-tag"></span></div>
+      <div class="modal-actions">
+        <button onclick ="confirmpurchase()">구매하기</button>
+        <button onclick ="closePayment()"> 취소</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="player" class="hidden">
+   <h2 id="playerTitle"></h2>
+   <span id="resumeBadge" class="resume-badge hidden">이어보기</span>
+   <p id ="resumeMessage"></p>
+   <div class="player-screen" id="playerScreen" aria-hidden="true"></div>
+   <div class="progress-wrap"><div id="playerProgressBar"></div></div>
+   <div class="progress-row">진행률 <span id ="progressText">0%</span></div>
+   <div class="player-controls">
+     <button onclick="togglePlay()" id="playBtn">재생</button>
+     <button onclick="toggleSubtitle()" id="subtitleBtn">자막 OFF</button>
+     <select id="speedSelect" onchange="changeSpeed()">
+       <option value="0.5">0.5x</option>
+       <option value="1" selected>1.0x</option>
+       <option value="1.5">1.5x</option>
+       <option value="2">2.0x</option>
+     </select>
+   </div>
+   <button onclick ="exitPlayer()">나가기 (진행률 저장)</button>
+  </div>
+</main>
+
+<script src="script.js"></script>
+</body>
+
+</html>
