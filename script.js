@@ -179,9 +179,16 @@ function openPlayer(id) {
     document.getElementById('player').classList.remove('hidden');
     document.getElementById('playBtn').textContent = '재생';
     // VOD 재생 화면: 콘텐츠별 AI 생성 포스터 이미지를 배경으로 사용해 실제 영상처럼 연출
-    if (screen) {
+   if (screen) {
         screen.style.backgroundImage = `url('${content.poster}')`;
-        screen.classList.add('paused'); // 기본 상태는 일시정지(버튼 '재생')이므로 팬 애니메이션도 정지
+        screen.classList.add('paused');
+    }
+
+    const video = document.getElementById('playerVideo');
+    if (video) {
+        video.pause();
+        video.currentTime = 0;
+        video.style.display = 'none';
     }
 
     const saved = getProgress(id);
@@ -201,9 +208,20 @@ function openPlayer(id) {
 function togglePlay() {
     const btn = document.getElementById('playBtn');
     const screen = document.getElementById('playerScreen');
-    const willPlay = btn.textContent === '재생'; // 현재 '재생' 표시 = 지금은 일시정지 상태
+    const video = document.getElementById('playerVideo');
+    const willPlay = btn.textContent === '재생';
+
     btn.textContent = willPlay ? '일시정지' : '재생';
     if (screen) screen.classList.toggle('paused', !willPlay);
+
+    if (video) {
+        if (willPlay) {
+            video.style.display = 'block';
+            video.play();
+        } else {
+            video.pause();
+        }
+    }
 }
 
 function changeSpeed() {
@@ -211,8 +229,16 @@ function changeSpeed() {
 }
 
 function exitPlayer() {
-    progress = 30; // 데모 편의를 위해 종료시 진행률을 30%로 고정 저장
+    progress = 30;
     setProgress(currentContentid, progress);
+
+    const video = document.getElementById('playerVideo');
+    if (video) {
+        video.pause();
+        video.currentTime = 0;
+        video.style.display = 'none';
+    }
+
     document.getElementById('player').classList.add('hidden');
 }
 
