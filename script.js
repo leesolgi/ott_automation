@@ -1,5 +1,5 @@
 const USERS = {
-    qatest: {password: '1234', balance: 5000}
+    qatest: {password: '1234', balance: 15000}
 };
 
 const CONTENTS = [
