@@ -22,6 +22,14 @@ function setPurchased(list) {
     localStorage.setItem('purchased_' + currentUser, JSON.stringify(list));
 }
 
+function getBookmarked() {
+    return JSON.parse(localStorage.getItem('bookmarked_' + currentUser) || '[]');
+}
+
+function setBookmarked(list) {
+    localStorage.setItem('bookmarked_' + currentUser, JSON.stringify(list));
+}
+
 function getProgress(id) {
     const data = JSON.parse(localStorage.getItem('progress_' + currentUser) || '{}');
     return data[id] || 0;
@@ -105,8 +113,12 @@ function renderContentList(list) {
             tagHtml = `<span class="tag-owned">보유중</span>`;
         }
 
+        const liked = getBookmarked().includes(c.id);
+
         li.innerHTML =
-            `<div class="thumb" style="background-image:url('${c.poster}')">${isLocked ? '<span class="lock-badge">🔒</span>' : ''}</div>` +
+            `<div class="thumb" style="background-image:url('${c.poster}')">` +
+                `<button class="like-btn${liked ? ' liked' : ''}" data-id="${c.id}" onclick="event.stopPropagation(); toggleLike(${c.id})">${liked ? '♥' : '♡'}</button>` +
+                `${isLocked ? '<span class="lock-badge">🔒</span>' : ''}</div>` +
             `<div class="card-body">` +
                 `<div class="card-title">${c.title}</div>` +
                 `<div class="card-meta">${tagHtml}</div>` +
@@ -114,6 +126,25 @@ function renderContentList(list) {
         li.onclick = () => selectContent(c.id);
         ul.appendChild(li);
     });
+}
+
+function toggleLike(contentId) {
+    if (!currentUser) { alert('로그인이 필요합니다'); return; }
+    const list = getBookmarked();
+    const idx = list.indexOf(contentId);
+    if (idx === -1) {
+        list.push(contentId);
+    } else {
+        list.splice(idx, 1);
+    }
+    setBookmarked(list);
+
+    const liked = list.includes(contentId);
+    const btn = document.querySelector(`.like-btn[data-id="${contentId}"]`);
+    if (btn) {
+        btn.classList.toggle('liked', liked);
+        btn.textContent = liked ? '♥' : '♡';
+    }
 }
 
 function selectContent(id) {
@@ -237,9 +268,6 @@ function exitPlayer() {
         video.currentTime = 0;
         video.style.display = 'none';
     }
-
-    document.getElementById('player').classList.add('hidden');
-}
 
     document.getElementById('player').classList.add('hidden');
 }
