@@ -23,13 +23,26 @@ jobs:
 
       - name: ESLint 기본 설정 생성 (없을 경우)
         run: |
-          if [ ! -f .eslintrc.json ]; then
-            echo '{
-              "env": { "browser": true, "es2021": true },
-              "extends": "eslint:recommended",
-              "parserOptions": { "ecmaVersion": "latest" },
-              "rules": {}
-            }' > .eslintrc.json
+          if [ ! -f eslint.config.js ]; then
+            cat > eslint.config.js << 'CONFIG'
+          module.exports = [
+            {
+              files: ["**/*.js"],
+              languageOptions: {
+                ecmaVersion: "latest",
+                sourceType: "script",
+                globals: {
+                  window: "readonly",
+                  document: "readonly",
+                  localStorage: "readonly",
+                  alert: "readonly",
+                  console: "readonly"
+                }
+              },
+              rules: {}
+            }
+          ];
+          CONFIG
           fi
 
       - name: ESLint 실행 (script.js 검사)
